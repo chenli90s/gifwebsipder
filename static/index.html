@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" type="text/css" href="animate.css">
+    <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+          crossorigin="anonymous">
+    <script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"
+            integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+            crossorigin="anonymous"></script>
+    <script src="vue.js"></script>
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+
+        #con {
+            width: 90%;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 0;
+            /*column-count: 4;*/
+            /*column-fill: auto;*/
+            /*flex-direction: row;*/
+            /*flex-wrap: wrap;*/
+        }
+
+        #con:after {
+            content: "";
+            display: table;
+            clear: both;
+            transition: all 1s ease;
+        }
+
+        #con ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            position: relative;
+        }
+
+        #con li {
+            width: 201px;
+            background-color: #e8e6e7;
+            padding: 3px;
+            float: left;
+            transition: all 1s ease;
+            /*-webkit-column-break-inside: avoid*/
+        }
+
+        #con li:hover {
+            animation: bounce 1s ease;
+            z-index: 100;
+        }
+
+        #con li img {
+            margin: 0 auto;
+            width: 195px
+        }
+
+        #con li a {
+            display: inline-block;
+            text-decoration: none;
+            font-style: normal;
+            color: black;
+            font-family: "Roboto", "Lucida Grande", Verdana, Arial, sans-serif;
+        }
+
+        p {
+            text-align: center;
+        }
+
+        .back {
+            margin-top: 40px;
+            margin-left: 200px;
+        }
+
+        #detail:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        #detail {
+            width: 90%;
+            margin: 0 auto;
+        }
+
+        .video:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        .video {
+            width: 520px;
+            margin: 0 auto;
+            background-image: url("loading.gif");
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .left {
+            width: 50%;
+            height: 550px;
+            position: absolute;
+            left: 0;
+            top: 80px;
+            cursor: url("left.ico"), pointer;
+            z-index: 100;
+        }
+
+        .right {
+            width: 50%;
+            height: 550px;
+            position: absolute;
+            left: 50%;
+            top: 80px;
+            cursor: url("right.ico"), pointer;
+        }
+
+        /*@media (max-width: 960px) {*/
+        /*#con {*/
+        /*column-count: 4;*/
+        /*}*/
+        /*}*/
+
+        /*@media (max-width: 750px) {*/
+        /*#con {*/
+        /*column-count: 3;*/
+        /*}*/
+        /*}*/
+
+        /*@media (max-width: 520px) {*/
+        /*#con {*/
+        /*column-count: 2;*/
+        /*}*/
+        /*}*/
+
+        /*@media (max-width: 360px) {*/
+        /*#con {*/
+        /*column-count: 1;*/
+        /*}*/
+        /*}*/
+    </style>
+</head>
+<body>
+<div id="container">
+    <div id="con">
+        <transition name="disv">
+            <ul id="lists">
+                <transition-group name="fade">
+                    <li v-for="item in lists" key="item.id" @click="fadeOut(item.link)"
+                        v-show="view" class="img" >
+                        <a href="#" :id="item.link"><img :src="item.img_src" alt="">
+                            <p>{{ item.title }}</p></a>
+                    </li>
+                </transition-group>
+            </ul>
+        </transition>
+    </div>
+    <transition name="showv">
+        <div v-show="!view" id="detail">
+            <button type="button" class="back btn btn-info" @click="fadeIn">返回</button>
+            <div class="left" @click="left"></div>
+            <div class="video">
+                    <video :src="address" autoplay="autoplay" width="520" height="440"
+                           loop="loop" v-show="!next"></video>
+
+                    <video :src="address_next" autoplay="autoplay" width="520" height="440"
+                           loop="loop" v-show="next"></video>
+
+                <h3>{{ title }}</h3>
+            </div>
+            <div class="right" @click="right"></div>
+        </div>
+    </transition>
+</div>
+
+<script src='axios.min.js'></script>
+<script src="main.js"></script>
+<script type="text/javascript">
+    Vue.prototype.$http = axios
+    function scro(h){
+
+                setTimeout(function () {
+                    console.log('---------------------------')
+                    window.scrollTo(0, h)
+                },1000)
+            }
+    var app = new Vue({
+        el: '#container',
+        data: {
+            page: 2,
+            lists: [],
+            view: true,
+            isrequest: false,
+            detail: null,
+            index: 0,
+            currHeight: 0,
+            next: false,
+        },
+        methods: {
+            updataList(res) {
+//                console.log(res, '-------')
+                this.lists = this.$data.lists.concat(res.data.data)
+                this.page++
+                this.isrequest = false
+                this.$nextTick(function () {
+                    imgLotion('lists', 'img')
+                })
+            },
+            fadeOut(id) {
+                this.view = false
+                console.log(id)
+                this.$http.get('/getDetail.go?get_param=' + id)
+                    .then(res => {
+                        this.detail = res.data.picInfo
+                    })
+                this.currHeight = window.scrollY
+            },
+            scro(){
+                setTimeout(function () {
+                    window.scrollTo(0, this.currHeight)
+                },2000)
+            },
+            fadeIn() {
+                this.view = true
+
+                this.$nextTick(function () {
+                    console.log(this.currHeight)
+                    scro(this.currHeight)
+                })
+            },
+            left() {
+                if (this.index >= 1) {
+                    this.index--
+                }
+            },
+            right() {
+                if (this.index < this.detail.length - 1) {
+                    this.index++
+                }
+            }
+        },
+        computed: {
+            address() {
+                if (this.detail) {
+                    return this.detail[this.index].mp4_url
+                }
+                return ''
+            },
+            address_next() {
+                if (this.detail) {
+                    return this.detail[this.index + 1].mp4_url
+                }
+                return ''
+            },
+            title() {
+                if (this.detail) {
+                    return this.detail[this.index].add_intro
+                }
+                return ''
+            }
+        },
+        mounted() {
+            this.$http.get('loadmore.go?page=' + this.page)
+                .then(this.updataList)
+            window.onscroll = () => {
+                if (!this.isrequest) {
+                    let height = window.pageYOffset
+//                    console.log(height + window.innerHeight, document.body.offsetHeight)
+                    if ((height + window.innerHeight + 1) > document.body.offsetHeight) {
+                        this.isrequest = true
+                        app.$http.get('loadmore.go?page=' + this.page).then(this.updataList)
+                    }
+                }
+            }
+        },
+
+
+    })
+
+    window.onresize = function () {
+        imgLotion('lists', 'img')
+    }
+
+
+
+</script>
+<style>
+    .fade-enter-active {
+        animation: fadeInUp 1s;
+    }
+
+    .fade-enter-to {
+        animation: bounceIn 1s;
+    }
+
+    .disv-enter, .disv-enter-to {
+        animation: slideInLeft 1s;
+    }
+
+    .disv-leave, disv-leave-to {
+        animation: slideOutLeft 1s;
+    }
+
+    .showv-enter, showv-enter-to {
+        animation: slideInRight 1s;
+    }
+
+    .showv-enter, showv-enter-to {
+        animation: slideOutRight 1s;
+    }
+
+    .left-enter-active{
+        animation: slideInLeft 1s;
+    }
+    .left-leave-active{
+        animation: slideOutLeft 1s;
+    }
+
+    .right-enter-active{
+        animation: slideInRight 1s;
+    }
+    .right-leave-active{
+        animation: slideOutRight 1s;
+    }
+
+</style>
+
+</body>
+</html>
